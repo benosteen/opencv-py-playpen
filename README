@@ -48,6 +48,8 @@ Goes through:
   Finding contours in a thresholded image
   Iterating through contours
   Drawing contours - one at a time, or many at once
+  Cleaning contours by making simpler approximations of them
+  Handling simple cvSeq structures
   Demo-ing the three simple contour comparison algorithms (which compare 'Hu Moments')
 
 face-detection.py  (updating to use the new opencv bindings - please wait a mo!)
