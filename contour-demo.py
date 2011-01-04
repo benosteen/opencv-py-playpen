@@ -1,8 +1,8 @@
 import cv, Image
 
 ## IMPORTANT! Change the following to point to the dir where you have
-## the image and an empty space to play in.
-IMAGEDIR = "/home/ben/Pictures/qrchem/demo"
+## the image "tubs-camview-perspective.png" and an empty space to play in.
+IMAGEDIR = "."
 
 # Use PIL to load an RGBA image and pass it to an OpenCV structure:
 pi = Image.open('%s/tubs-camview-perspective.png' % IMAGEDIR)
@@ -11,9 +11,14 @@ cv.SetData(p_im, pi.tostring())
 
 def sm(ipimage, name):
   # Save greyscale image
+  # Get a file to write to:
   fp = open("%s/%s.png" % (IMAGEDIR, name), "wb")
+  # The L mode here tells the PIL function how wide the OpenCV image data
+  # is. 8 bit single channel, often a 'greyscale' of some sort, is "L"
   gi = Image.fromstring("L", cv.GetSize(ipimage), ipimage.tostring())
+  # Save as a PNG
   gi.save(fp, format="PNG")
+  # clean up
   fp.close()
   del gi
 
@@ -26,19 +31,60 @@ def srgb(im, name):
   del gi
 
 def huethresh(srcrgb_im, hlower, hupper, slower, supper):
+  # allocate some memory to do the conversion into. Otherwise, we'd
+  # overwrite the source data and have to reload it. Colourspace conversions
+  # aren't lossless typically!
+  hsv = cv.CreateImage(cv.GetSize(srcrgb_im), cv.IPL_DEPTH_8U, 3)
+  cv.Zero(hsv)
+  # convert rgb to hsv
+  cv.CvtColor(srcrgb_im, hsv, cv.CV_RGB2HSV)
+  # Allocate some memory to hold each individual HSV channel
+  h = cv.CreateImage(cv.GetSize(srcrgb_im), cv.IPL_DEPTH_8U, 1)
+  s = cv.CreateImage(cv.GetSize(srcrgb_im), cv.IPL_DEPTH_8U, 1)
+  v = cv.CreateImage(cv.GetSize(srcrgb_im), cv.IPL_DEPTH_8U, 1)
+  # split rgb image into hsv planes:
+  # Handy function, but requires you to pass in None for channels that aren't applicable
+  # eg if you want to split a two channel image, you'd have to have ... , None, None) on the 
+  # end
+  cv.CvtPixToPlane(srcrgb_im, h, s, v, None)
+  # threshold the planes within upper + lower limits
+  cv.InRangeS(h, hlower, hupper, h)  # output values will be 0 or 255 (8bit)
+  cv.InRangeS(s, slower, supper, s)
+  # Logical AND the planes together, and store the result in v
+  cv.And(h, s, v) # again, 0 or 255
+
+  # As InRangeS + And are all done by the OpenCV C code, this is much faster
+  # than iterating through each pixel in python
+  del h, s, hsv
+  return v
+
+def rubbish_huesatthreshold(srcrgb_im, hlower, hupper, slower, supper):
+  # Rubbish as the thresholding will be done in python instead
   hsv = cv.CreateImage(cv.GetSize(srcrgb_im), cv.IPL_DEPTH_8U, 3)
   # convert rgb to hsv
   cv.CvtColor(srcrgb_im, hsv, cv.CV_RGB2HSV)
+  # Allocate some memory to hold each individual HSV channel
   h = cv.CreateImage(cv.GetSize(srcrgb_im), cv.IPL_DEPTH_8U, 1)
   s = cv.CreateImage(cv.GetSize(srcrgb_im), cv.IPL_DEPTH_8U, 1)
   v = cv.CreateImage(cv.GetSize(srcrgb_im), cv.IPL_DEPTH_8U, 1)
   # split rgb image into hsv planes:
   cv.CvtPixToPlane(srcrgb_im, h, s, v, None)
-  # threshold the planes within upper + lower limits
-  cv.InRangeS(h, hlower, hupper, h)  # values will be 0 or 255
-  cv.InRangeS(s, slower, supper, s)
-  # AND the planes together, and store the result in v
-  cv.And(h, s, v) # again, 0 or 255
+  # Thresholding...
+  # expecting a 2D image
+  (cols,rows) = cv.GetSize(srcrgb_im)
+  # GOTCHA WARNING: per-pixel access is actually by (row, column), the opposite order from
+  # the result of GetSize!
+  # SECOND GOTCHA: pixels are accessed by passing in a tuple! Not h[x][y], but h[(x,y)]!
+  # reusing v again so clearing it to be safe
+  cv.Zero(v)
+  for y in cols:
+    for x in rows:
+      h_val = h[(x,y)]
+      s_val = s[(x,y)]
+      if (h_val>=hlower and h_val<=hupper) and (s_val>=slower and s_val<=supper):
+        v[(x,y)] = 255
+      else:
+        v[(x,y)] = 0
   del h, s, hsv
   return v
 

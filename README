@@ -50,7 +50,7 @@ Goes through:
   Drawing contours - one at a time, or many at once
   Demo-ing the three simple contour comparison algorithms (which compare 'Hu Moments')
 
-face-detection.py
+face-detection.py  (updating to use the new opencv bindings - please wait a mo!)
 -----------------
 
 - requires: opencv 2.1+ bindings
