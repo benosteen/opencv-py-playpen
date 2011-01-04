@@ -1,0 +1,65 @@
+Playing with OpenCV with python (for fun and learning)
+======================================================
+
+OpenCV is a wonderful set of libraries, with thorough documentation... if you know what you want
+to do. There is a lack of A -> B scripts which string together the commands that you might need
+or even tell you why you need to do certain things in a certain manner.
+
+This is a simple repo of scripts that should be straightforward and uncomplicated to read and follow.
+
+Well, that's the aim anyhow.
+
+The scripts are designed so that they can be copy and pasted into an interpreter, like the python
+commandline or ipython, in a piecemeal fashion from top to bottom. This is so you can play
+along and tweak, alter and twist the code to experiment with it as you go.
+
+Often there are some global variables to change to suit your computer. These are generally filepaths, and should
+be edited before running the rest of the code :) As such any of these will be at the very top of the scripts and
+generally with whacking great warnings around them.
+
+Problems with the current OpenCV python bindings (true on 4/1/11):
+==================================================================
+
+The api binding for cv.MatchShapes is wrong! It's supposed to return a double value from the comparison, but
+due to a binding issue, it will only ever return None. The fix is simple, and you can see how to do it
+here:
+
+http://benosteen.wordpress.com/2011/01/04/fix-for-opencv-python-binding-cv-matchshapes-returning-nonetype-rather-than-double/
+
+This does require you to build from the SVN though. You don't have to do it but the contour matching script won't function
+completely without the fix.
+
+Scripts included:
+=================
+
+contour-demo.py
+---------------
+
+- requires: opencv 2.1 python bindings (with the fix mentioned above) - "import cv" is a quick test to see
+            PIL  (easy_install PIL) - the python imaging library
+- uses:  the image "tubs-camview-perspective.png" which is a faked image from a webcam, which has been altered to 
+     undistort and to fake a bird-eye perspective - making the round tubs appear round and not ellipses for example.
+
+Goes through:
+  Getting images from the python imaging library (PIL) form to the OpenCV form (IPL) and back again
+  Loading and Saving RGB, RGBA, and Greyscale 8-bit images in PNG format
+  Converting IPL images to different colourspaces
+  An advanced, reasonably fast image thresholding based on Hue, Satuation and Value (HSV)
+  Finding contours in a thresholded image
+  Iterating through contours
+  Drawing contours - one at a time, or many at once
+  Demo-ing the three simple contour comparison algorithms (which compare 'Hu Moments')
+
+face-detection.py
+-----------------
+
+- requires: opencv 2.1+ bindings
+- uses:     webcam
+
+Goes through:
+  Getting images from a webcam
+  Using some of the 'highgui' opencv library (handles windows, image drawing, key capture, etc)
+  Using the Face detection routine (the Haar Cascade method)
+  Drawing a rectangle around detected faces in a webcam view
+  Displaying IPL images in windows on the desktop
+
